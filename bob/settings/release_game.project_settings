@@ -1,0 +1,11 @@
+[project]
+title = DefoldJam2023
+
+[android]
+package = com.d954mas.game.defoldjam2023
+
+[game]
+version = release
+
+[native_extension]
+app_manifest = /app_manifest_release.appmanifest

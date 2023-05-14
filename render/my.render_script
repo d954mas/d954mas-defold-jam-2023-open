@@ -1,0 +1,210 @@
+local COMMON = require "libs.common"
+local CONSTANTS = require "libs.constants"
+local RENDER_3D = require "render.render3d"
+local WORLD = require "world.world"
+local CAMERAS = require "libs_project.cameras"
+local ILLUMINATION = require "illumination.illumination"
+local TAG = "Render"
+
+---@class Render
+local Render = COMMON.new_n28s()
+--region init
+function Render:init()
+	COMMON.RENDER = self
+	self.clear_color = vmath.vector4(0.2, 0.2, 0.2, 1)
+	--самый первый размер это размер игры. Иначе камеры плохо отрабатывыют в html  билде
+	self.screen_size = {
+		w = CONSTANTS.PLATFORM_IS_WEB and render.get_width() or render.get_window_width(),
+		h = CONSTANTS.PLATFORM_IS_WEB and render.get_height() or render.get_window_height(),
+		aspect = 1
+	}
+	self.config_size = {
+		w = render.get_width(),
+		h = render.get_height()
+	}
+	self.screen_size.aspect = self.screen_size.w / self.screen_size.h
+	self.size = {
+		w = render.get_width();
+		h = render.get_height()
+	}
+
+	self.camera_view = vmath.matrix4()
+	self.camera_perspective = vmath.matrix4()
+	self.camera_frustum = vmath.matrix4()
+
+	self:init_predicates()
+	self:register_messages()
+	self:init_draw_opts()
+	self.clear = { [render.BUFFER_COLOR_BIT] = self.clear_color, [render.BUFFER_DEPTH_BIT] = 1, [render.BUFFER_STENCIL_BIT] = 0 }
+	CAMERAS:init()
+	self:window_size_changed()
+
+end
+
+function Render:init_draw_opts()
+	self.draw_opts = {
+		constants = render.constant_buffer(),
+		frustum = nil,
+	}
+
+	self.draw_opts_vignette = {
+		constants = render.constant_buffer(),
+	}
+	self.draw_opts_vignette.constants.tint = vmath.vector4(1, 1, 1, 0)
+	self.draw_opts_vignette.constants.vignette_params = vmath.vector4(1)
+
+	ILLUMINATION.add_constants(self.draw_opts.constants)
+	WORLD.game.lights:set_render(self)
+
+end
+
+function Render:create_render_target(name, params)
+	-- render target buffer parameters
+	local color_params = { format = params.format or render.FORMAT_RGBA,
+						   width = assert(params.w),
+						   height = assert(params.h),
+						   min_filter = params.min_filter or render.FILTER_LINEAR,
+						   mag_filter = params.mag_filter or render.FILTER_LINEAR,
+						   u_wrap = params.u_wrap or render.WRAP_CLAMP_TO_EDGE,
+						   v_wrap = params.v_wrap or render.WRAP_CLAMP_TO_EDGE }
+
+	local depth_params
+	if (params.has_depth) then
+		depth_params = { format = render.FORMAT_DEPTH,
+						 width = params.w,
+						 height = params.h,
+						 u_wrap = params.u_wrap or render.WRAP_CLAMP_TO_EDGE,
+						 v_wrap = params.v_wrap or render.WRAP_CLAMP_TO_EDGE }
+	end
+
+	return {
+		target = render.render_target(assert(name), { [render.BUFFER_COLOR_BIT] = color_params, [render.BUFFER_DEPTH_BIT] = depth_params }),
+		w = params.w,
+		h = params.h
+	}
+end
+
+function Render:init_predicates()
+	self.predicates = {
+		tile = render.predicate({ "tile" }),
+		model = render.predicate({ "model" }),
+		gui = render.predicate({ "gui" }),
+		text = render.predicate({ "text" }),
+		particle = render.predicate({ "particle" }),
+		vignette = render.predicate({ "vignette" }),
+		sprite3d = render.predicate({ "sprite_3d" }),
+	}
+
+end
+
+function Render:register_messages()
+	self.msg_receiver = COMMON.MSG()
+	self.msg_receiver:add("window_resized", function(...)
+		local prev_w = self.screen_size.w
+		local prev_h = self.screen_size.h
+		self.screen_size.w = render.get_window_width()
+		self.screen_size.h = render.get_window_height()
+		self.screen_size.aspect = self.screen_size.w / self.screen_size.h
+		if (prev_w ~= self.screen_size.w or prev_h ~= self.screen_size.h) then
+			COMMON.i("screen size changed. from " .. "w:" .. prev_w .. " h:" .. prev_h
+					.. " to w:" .. self.screen_size.w .. " h:" .. self.screen_size.h, TAG)
+			self:window_size_changed()
+			COMMON.EVENT_BUS:event(COMMON.EVENTS.WINDOW_RESIZED, { width = self.screen_size.w, height = self.screen_size.h,
+																   prev_width = prev_w, prev_height = prev_h })
+		end
+	end)
+end
+--endregion
+
+
+function Render:window_size_changed()
+	self.gui_proj = vmath.matrix4_orthographic(0, self.screen_size.w, 0, self.screen_size.h, -1000, 1000)
+	self.empty_view = vmath.matrix4()
+	self.vignette_proj = vmath.matrix4_orthographic(-0.5, 0.5, -0.5, 0.5, -1, 1)
+	game.set_screen_size(self.screen_size.w, self.screen_size.h)
+	CAMERAS:window_resized()
+end
+
+function Render:render_vignette()
+	render.set_view(self.empty_view)
+	render.set_projection(self.vignette_proj)
+
+	render.set_depth_mask(false)
+	render.disable_state(render.STATE_DEPTH_TEST)
+	render.disable_state(render.STATE_STENCIL_TEST)
+	render.disable_state(render.STATE_CULL_FACE)
+	render.enable_state(render.STATE_BLEND)
+	render.set_blend_func(render.BLEND_SRC_ALPHA, render.BLEND_ONE_MINUS_SRC_ALPHA)
+	render.draw(self.predicates.vignette, self.draw_opts_vignette)
+end
+
+function Render:update(dt)
+	ILLUMINATION.prepare_render()
+
+	self.clear[render.BUFFER_COLOR_BIT] = self.draw_opts.constants.fog_color
+
+	local window_width = self.screen_size.w
+	local window_height = self.screen_size.h
+
+	render.set_viewport(0, 0, window_width, window_height)
+	render.set_depth_mask(true)
+	render.set_stencil_mask(0xff)
+	render.clear(self.clear)
+
+	game.camera_get_view(self.camera_view)
+	game.camera_get_perspective(self.camera_perspective)
+	render.set_view(self.camera_view)
+	render.set_projection(self.camera_perspective)
+
+	xmath.matrix_mul(self.camera_frustum, self.camera_perspective, self.camera_view)
+
+	render.set_depth_mask(true)
+	render.enable_state(render.STATE_DEPTH_TEST)
+	render.enable_state(render.STATE_CULL_FACE)
+	render.disable_state(render.STATE_STENCIL_TEST)
+	render.disable_state(render.STATE_BLEND)
+
+	self.draw_opts.frustum = self.camera_frustum
+	render.draw(self.predicates.model, self.draw_opts)
+
+	render.enable_state(render.STATE_BLEND)
+	render.set_blend_func(render.BLEND_ONE, render.BLEND_ONE_MINUS_SRC_ALPHA)
+	render.disable_state(render.STATE_CULL_FACE)
+	render.set_depth_mask(false)
+	render.draw(self.predicates.sprite3d, self.draw_opts)
+	self.draw_opts.frustum = nil
+
+
+
+
+	--	render.set_depth_mask(true)
+
+
+	if (not COMMON.CONSTANTS.PLATFORM_IS_WEB) then
+		render.draw_debug3d()
+	end
+
+	-- Render GUI. It takes the whole screen at this moment.
+	render.set_viewport(0, 0, window_width, window_height)
+
+	render.set_depth_mask(false)
+	render.disable_state(render.STATE_DEPTH_TEST)
+	render.enable_state(render.STATE_BLEND)
+	render.set_blend_func(render.BLEND_SRC_ALPHA, render.BLEND_ONE_MINUS_SRC_ALPHA)
+	render.disable_state(render.STATE_CULL_FACE)
+	self:render_vignette()
+
+	render.set_view(self.empty_view)
+	render.set_projection(self.gui_proj)
+
+	render.enable_state(render.STATE_STENCIL_TEST)
+	render.draw(self.predicates.gui)
+	render.draw(self.predicates.text)
+	render.disable_state(render.STATE_STENCIL_TEST)
+end
+
+function Render:on_message(message_id, message)
+	self.msg_receiver:on_message(self, message_id, message)
+end
+
+COMMON.N28S.register(Render())

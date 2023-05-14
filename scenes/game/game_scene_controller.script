@@ -1,0 +1,45 @@
+local COMMON = require "libs.common"
+local WORLD = require "world.world"
+local POINTER = require "libs.pointer_lock"
+local SCENE_ENUMS = require "libs.sm.enums"
+
+---@class ScriptGame
+local Script = COMMON.new_n28s()
+
+function Script:init()
+	COMMON.input_acquire()
+	COMMON.CONTEXT:register(COMMON.CONTEXT.NAMES.GAME, self)
+	COMMON.FEATURES:load_game()
+
+
+	local time = socket.gettime()
+	WORLD.game:game_loaded()
+	local delay = (socket.gettime() - time)
+	COMMON.i("total level load:" .. delay, "GameSceneController")
+
+	--fixed blink after loading before game
+	if (html_utils) then
+		timer.delay(0, false, function()
+			html_utils.hide_bg()
+		end)
+	end
+end
+
+function Script:fixed_update(dt)
+	WORLD.game:update(dt)
+end
+
+function Script:final()
+	COMMON.input_release()
+	COMMON.CONTEXT:unregister(COMMON.CONTEXT.NAMES.GAME)
+	WORLD.game:final()
+end
+
+function Script:on_input(action_id, action)
+	action_id, action = POINTER.transform_input(action_id, action)
+	if (WORLD.sm:get_scene_by_name(WORLD.sm.SCENES.GAME)._state == SCENE_ENUMS.STATES.RUNNING) then
+		return WORLD.game:on_input(action_id, action)
+	end
+end
+
+COMMON.N28S.register(Script())

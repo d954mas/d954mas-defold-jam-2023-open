@@ -1,0 +1,123 @@
+--[[
+  trenchbroom.editor_script
+  github.com/astrochili/defold-trenchbroom
+
+  Copyright (c) 2022 Roman Silin
+  MIT license. See LICENSE for details.
+--]]
+
+local config = require 'trenchbroom.config'
+local trenchbroom = require 'trenchbroom.trenchbroom'
+
+local editor_script = { }
+
+local platforms = {
+  windows = 'x86_64-win32',
+  macos = 'x86_64-darwin',
+  linux = 'x86_64-linux'
+}
+
+local function is_command_active(options)
+  local path = editor.get(options.selection, 'path')
+  local is_map = path:sub(-4) == '.map'
+  return is_map
+end
+
+local function make_clean_up_action(paths)
+  local script = ''
+
+  for _, path in ipairs(paths) do
+    if editor.platform == platforms.windows then
+      script = script .. 'if ( Test-Path -Path "' .. path .. '" ) '
+      script = script .. '{ '
+      script = script .. '[void](Remove-Item -Path "' .. path .. '" -Recurse); '
+      script = script .. '};'
+      script = script .. '[void](New-Item -Path "' .. path .. '" -ItemType Directory); '
+      script = script .. 'echo \'Cleaned up `' .. path .. '`\'; '
+    else
+      script = script .. 'if [ -d "' .. path .. '" ]; '
+      script = script .. 'then rm -r "' .. path .. '"; '
+      script = script .. 'fi; '
+      script = script .. 'mkdir ' .. '"' .. path .. '"; '
+      script = script .. 'echo "Cleaned up \'' .. path .. '\'"; ';
+    end
+  end
+
+  local command
+  if editor.platform == platforms.windows then
+    command = { 'powershell', 'Invoke-Command -ScriptBlock { ' .. script .. ' }' }
+  else
+    command = { 'sh', '-c', script }
+  end
+
+  local action = {
+    action = 'shell',
+    command = command
+  }
+
+  return action
+end
+
+local function init_config(options)
+  local folder_separator = editor.platform == platforms.windows and '\\' or '/'
+
+  local map_path = editor.get(options.selection, 'path')
+  local map_directory = map_path:match('(.*)' .. '/'):sub(2)
+  local map_name = map_path:match('.+/(.+)%.map')
+
+  config.init(folder_separator, map_directory, map_name)
+end
+
+local function clean_up_component_folders(options)
+  init_config(options)
+
+  print('')
+  print('# Cleaning up')
+
+  local paths = {
+    config.buffer_directory,
+    config.mesh_directory,
+    config.convexshape_directory,
+    config.collisionobject_directory,
+    config.script_directory
+  }
+  local actions = {
+    make_clean_up_action(paths)
+  }
+
+  return actions
+end
+
+local function map_to_collection(options)
+  init_config(options)
+
+  print('')
+
+  trenchbroom.convert()
+end
+
+function editor_script.get_commands()
+  local preparing_command = {
+    label = 'Prepare Map Components Folders',
+    locations = { 'Assets' },
+    query = {
+      selection = { type = 'resource', cardinality = 'one' }
+    },
+    active = is_command_active,
+    run = clean_up_component_folders
+  }
+
+  local converting_command = {
+    label = 'Convert Map to Collection',
+    locations = { 'Assets' },
+    query = {
+      selection = { type = 'resource', cardinality = 'one' }
+    },
+    active = is_command_active,
+    run = map_to_collection
+  }
+
+  return { preparing_command, converting_command }
+end
+
+return editor_script

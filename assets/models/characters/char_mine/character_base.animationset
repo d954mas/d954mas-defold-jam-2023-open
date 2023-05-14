@@ -1,0 +1,10 @@
+animations {
+  animation: "/assets/models/characters/char_mine/run.dae"
+}
+animations {
+  animation: "/assets/models/characters/char_mine/die.dae"
+}
+animations {
+  animation: "/assets/models/characters/char_mine/idle.dae"
+}
+skeleton: "/assets/models/characters/char_mine/run.dae"

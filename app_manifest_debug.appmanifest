@@ -1,0 +1,88 @@
+platforms:
+    armv7-ios:
+        context:
+            excludeLibs: [liveupdate, record, vpx, physics, Box2D]
+            excludeSymbols: []
+            symbols: []
+            libs: [liveupdate_null, record_null, physics_3d]
+            frameworks: []
+            linkFlags: []
+    arm64-ios:
+        context:
+            excludeLibs: [liveupdate, record, vpx, physics, Box2D]
+            excludeSymbols: []
+            symbols: []
+            libs: [liveupdate_null, record_null, physics_3d]
+            frameworks: []
+            linkFlags: []
+    x86_64-ios:
+        context:
+            excludeLibs: [liveupdate, record, vpx, physics, Box2D]
+            excludeSymbols: []
+            symbols: []
+            libs: [liveupdate_null, record_null, physics_3d]
+            frameworks: []
+            linkFlags: []
+    armv7-android:
+        context:
+            excludeLibs: [liveupdate, record, vpx, physics, Box2D]
+            excludeJars: []
+            excludeSymbols: []
+            symbols: []
+            libs: [liveupdate_null, record_null, physics_3d]
+            linkFlags: []
+            jetifier: true
+    arm64-android:
+        context:
+            excludeLibs: [liveupdate, record, vpx, physics, Box2D]
+            excludeJars: []
+            excludeSymbols: []
+            symbols: []
+            libs: [liveupdate_null, record_null, physics_3d]
+            linkFlags: []
+            jetifier: true
+    x86_64-osx:
+        context:
+            excludeLibs: [liveupdate, record, vpx, physics, Box2D]
+            excludeSymbols: []
+            symbols: []
+            libs: [liveupdate_null, record_null, physics_3d]
+            frameworks: []
+            linkFlags: []
+    x86_64-linux:
+        context:
+            excludeLibs: [liveupdate, record, vpx, physics, Box2D]
+            excludeSymbols: []
+            symbols: []
+            libs: [liveupdate_null, record_null, physics_3d]
+            linkFlags: []
+    x86-win32:
+        context:
+            excludeLibs: [libliveupdate, librecord, vpx, libphysics, libBox2D]
+            excludeSymbols: []
+            symbols: []
+            libs: [libliveupdate_null.lib, librecord_null.lib, libphysics_3d.lib]
+            linkFlags: []
+    x86_64-win32:
+        context:
+            excludeLibs: [libliveupdate, librecord, vpx, libphysics, libBox2D]
+            excludeSymbols: []
+            symbols: []
+            libs: [libliveupdate_null.lib, librecord_null.lib, libphysics_3d.lib]
+            linkFlags: []
+    js-web:
+        context:
+            excludeLibs: [liveupdate, record, vpx, physics, Box2D]
+            excludeJsLibs: []
+            excludeSymbols: []
+            symbols: []
+            libs: [liveupdate_null, record_null, physics_3d]
+            linkFlags: []
+    wasm-web:
+        context:
+            excludeLibs: [liveupdate, record, vpx, physics, Box2D]
+            excludeJsLibs: []
+            excludeSymbols: []
+            symbols: []
+            libs: [liveupdate_null, record_null, physics_3d]
+            linkFlags: []

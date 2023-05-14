@@ -1,0 +1,171 @@
+local COMMON = require "libs.common"
+local GUI = require "libs_project.gui.gui"
+local WORLD = require "world.world"
+local POINTER = require "libs.pointer_lock"
+local ACTIONS = require "libs.actions.actions"
+local TWEEN = require "libs.tween"
+local VirtualPad = require "libs_project.gui.virtual_pad"
+
+local BaseGuiScript = require "libs_project.scripts.base_gui_script"
+
+local DialogView = COMMON.class("dialog view")
+
+function DialogView:initialize(config)
+	self.nodes = gui.clone_tree(gui.get_node("lbl_dialog/root"))
+	self.vh = {
+		root = assert(self.nodes["lbl_dialog/root"]),
+		lbl = assert(self.nodes["lbl_dialog/lbl"])
+	}
+	self.config = assert(config)
+	assert(self.config.text)
+	assert(self.config.time)
+
+	self.animations = ACTIONS.Sequence()
+	self.animations.drop_empty = false
+end
+
+function DialogView:show()
+	gui.set_text(self.vh.lbl, assert(self.config.text))
+	self.animations:add_action(function()
+		gui.set_enabled(self.vh.root, true)
+		gui.set_color(self.vh.root, vmath.vector4(1, 1, 1, 0))
+		if (self.config.delay) then
+			COMMON.coroutine_wait(self.config.delay)
+		end
+	end)
+	self.animations:add_action(ACTIONS.TweenGui { object = self.vh.root, property = "color", v4 = true, from = vmath.vector4(1, 1, 1, 0),
+												  to = vmath.vector4(1, 1, 1, 1), time = 0.5, easing = TWEEN.easing.inQuad })
+	self.animations:add_action(ACTIONS.Wait { time = self.config.time })
+	self.animations:add_action(ACTIONS.TweenGui { object = self.vh.root, property = "color", v4 = true, from = vmath.vector4(1, 1, 1, 1),
+												  to = vmath.vector4(1, 1, 1, 0), time = 0.5, easing = TWEEN.easing.outCubic })
+	self.animations:add_action(function()
+		self.done = true
+		self:dispose()
+	end)
+
+end
+
+function DialogView:update(dt)
+	self.animations:update(dt)
+end
+
+function DialogView:dispose()
+	gui.delete_node(self.vh.root)
+	self.vh = nil
+end
+
+---@class GameSceneGuiScript:GuiScriptBase
+local Script = COMMON.class("GameSceneGuiScript", BaseGuiScript)
+
+function Script:init()
+	BaseGuiScript.init(self, { context_name = COMMON.CONTEXT.NAMES.GAME_GUI })
+	self.subscription:add(COMMON.EVENT_BUS:subscribe(COMMON.EVENTS.WINDOW_RESIZED):go_distinct(self.scheduler):subscribe(function()
+		self:on_resize()
+	end))
+	self:on_resize()
+end
+
+function Script:bind_vh()
+	self.vh = {
+		crosshair = gui.get_node("crosshair"),
+		tooltip_use_flashlight = gui.get_node("tooltip_use_flashlight")
+	}
+
+	self.views = {
+		virtual_pad = VirtualPad("virtual_pad"),
+		btn_flashlight = GUI.ButtonScale("btn_flashlight"),
+	}
+end
+
+function Script:init_gui()
+	BaseGuiScript.init_gui(self)
+	gui.set_render_order(COMMON.CONSTANTS.GUI_ORDER.GAME)
+	gui.set_enabled(self.vh.crosshair, WORLD.game.level_creator.player.camera.first_persons)
+	self.views.btn_flashlight:set_input_listener(function()
+		WORLD.game:player_toggle_flashlight()
+	end)
+	if (COMMON.html5_is_mobile()) then
+		gui.set_text(self.vh.tooltip_use_flashlight, COMMON.LOCALIZATION.tooltip_use_flashlight_mobile())
+	else
+		gui.set_text(self.vh.tooltip_use_flashlight, COMMON.LOCALIZATION.tooltip_use_flashlight())
+	end
+	gui.set_enabled(self.vh.tooltip_use_flashlight, false)
+	--self.views.btn_flashlight.input_on_pressed = true
+
+	local is_mobile = COMMON.html5_is_mobile()
+	self.views.virtual_pad:set_enabled(is_mobile)
+	self.views.btn_flashlight:set_enabled(is_mobile)
+
+	self.dialogs = {
+		list = {},
+		current = nil
+	}
+end
+
+function Script:update_dialogs(dt)
+	if (self.dialogs.current) then
+		self.dialogs.current:update(dt)
+		if (self.dialogs.current.done) then
+			self.dialogs.current = nil
+		end
+	end
+	if (not self.dialogs.current and #self.dialogs > 0) then
+		self.dialogs.current = table.remove(self.dialogs, 1)
+		self.dialogs.current:show()
+	end
+end
+
+function Script:update(dt)
+	self.views.virtual_pad:update()
+	self:update_dialogs(dt)
+	if (self.actions_flashlight_tooltip) then
+		self.actions_flashlight_tooltip:update(dt)
+		if (self.actions_flashlight_tooltip:is_finished()) then
+			self.actions_flashlight_tooltip = nil
+		end
+	end
+end
+
+function Script:add_dialog(config)
+	local dialog = DialogView(config)
+	table.insert(self.dialogs, dialog)
+	return dialog
+end
+
+function Script:on_input(action_id, action)
+	if (self.views.virtual_pad:on_input(action_id, action)) then
+		return true
+	end
+	if (self.views.btn_flashlight:on_input(action_id, action)) then
+		return true
+	end
+end
+
+function Script:on_resize()
+
+end
+
+function Script:tooltip_use_flashlight_show()
+	self.actions_flashlight_tooltip = ACTIONS.Sequence()
+	gui.set_color(self.vh.tooltip_use_flashlight, vmath.vector4(1, 1, 1, 0))
+	gui.set_enabled(self.vh.tooltip_use_flashlight, true)
+	self.actions_flashlight_tooltip:add_action(ACTIONS.TweenGui { object = self.vh.tooltip_use_flashlight, property = "color", v4 = true, from = vmath.vector4(1, 1, 1, 0),
+																  to = vmath.vector4(1, 1, 1, 1), time = 0.8, easing = TWEEN.easing.inQuad })
+	self.actions_flashlight_tooltip:add_action(ACTIONS.Wait { time = 4 })
+
+
+
+end
+
+function Script:tooltip_use_flashlight_hide()
+	if (not self.actions_flashlight_tooltip) then
+		self.actions_flashlight_tooltip = ACTIONS.Sequence()
+	end
+	self.actions_flashlight_tooltip:add_action(ACTIONS.TweenGui { object = self.vh.tooltip_use_flashlight, property = "color", v4 = true, from = vmath.vector4(1, 1, 1, 1),
+																  to = vmath.vector4(1, 1, 1, 0), time = 0.5, easing = TWEEN.easing.outCubic })
+	self.actions_flashlight_tooltip:add_action(function()
+		gui.set_enabled(self.vh.tooltip_use_flashlight, false)
+	end)
+end
+
+COMMON.N28S.register_scripts({ Script() })

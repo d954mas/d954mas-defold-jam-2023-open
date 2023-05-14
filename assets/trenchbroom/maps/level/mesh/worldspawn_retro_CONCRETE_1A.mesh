@@ -1,0 +1,7 @@
+material: "/illumination/materials/model.material"
+vertices: "/assets/trenchbroom/maps/level/buffer/worldspawn_retro_CONCRETE_1A.buffer"
+textures: "/assets/trenchbroom/textures/retro/CONCRETE_1A.png"
+textures: "/illumination/textures/data.png"
+primitive_type: PRIMITIVE_TRIANGLES
+position_stream: "position"
+normal_stream: "normal"

@@ -1,0 +1,8 @@
+[project]
+dependencies#0 = https://github.com/GameDistribution/gd-defold/archive/main.zip
+
+[game]
+target = game_distribution
+
+[gamedistribution]
+game_id = 

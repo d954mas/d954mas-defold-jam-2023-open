@@ -1,0 +1,1 @@
+go.property("atlas", resource.atlas("/assets/images/game/game.atlas"))

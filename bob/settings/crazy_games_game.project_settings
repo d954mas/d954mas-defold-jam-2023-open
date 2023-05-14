@@ -1,0 +1,7 @@
+
+[project]
+dependencies#0 = https://github.com/d954mas/defold-crazygames-sdk/archive/master.zip
+
+[game]
+target = crazy_games
+

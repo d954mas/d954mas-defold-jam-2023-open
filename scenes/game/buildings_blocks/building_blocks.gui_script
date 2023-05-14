@@ -1,0 +1,101 @@
+local COMMON = require "libs.common"
+local GUI = require "libs_project.gui.gui"
+local WORLD = require "world.world"
+local POINTER = require "libs.pointer_lock"
+local ENUMS = require "world.enums.enums"
+local DEFS = require "world.balance.def.defs"
+local BaseGuiScript = require "libs_project.scripts.base_gui_script"
+
+---@class BuildingBlocksGuiScript:GuiScriptBase
+local Script = COMMON.class("BuildingBlocksGuiScript", BaseGuiScript)
+
+function Script:init()
+	BaseGuiScript.init(self, { context_name = COMMON.CONTEXT.NAMES.BUILDING_BLOCKS })
+end
+
+function Script:bind_vh()
+	self.vh = {
+		menu = gui.get_node("menu"),
+		fader = gui.get_node("fader"),
+		current_block_icon = gui.get_node("current_block/icon")
+	}
+
+	self.views = {
+		cells = {}
+	}
+	for i = 1, 28 do
+		local cell = {
+			root = gui.get_node("cell_" .. i .. "/root"),
+			icon = gui.get_node("cell_" .. i .. "/icon"),
+			voxel = -1
+		}
+		self.views.cells[i] = cell
+		gui.play_flipbook(cell.icon, "empty")
+		gui.set_enabled(cell.root, false)
+	end
+end
+
+function Script:init_gui()
+	BaseGuiScript.init_gui(self)
+	gui.set_render_order(COMMON.CONSTANTS.GUI_ORDER.BUILDING_BLOCKS)
+	self:set_menu_visible(false)
+	local cellIdx = 0
+	for i = 0, #DEFS.VOXELS.VOXELS do
+		cellIdx = cellIdx + 1
+		local view = self.views.cells[cellIdx]
+		local voxel_def = DEFS.VOXELS.VOXELS[i]
+		view.voxel = i
+		gui.play_flipbook(view.icon,self:get_voxel_image(i))
+		gui.set_enabled(view.root, true)
+	end
+	self:set_current_voxel(WORLD.game.state.building_blocks.voxel)
+
+end
+
+function Script:set_menu_visible(visible)
+	self.show_menu = visible
+	gui.set_enabled(self.vh.menu, visible)
+	gui.set_enabled(self.vh.fader, visible)
+	WORLD.game.state.state = visible and ENUMS.GAME_STATE.PAUSE or ENUMS.GAME_STATE.RUN
+end
+
+function Script:set_current_voxel(voxel)
+	local def = assert(DEFS.VOXELS.VOXELS[voxel])
+	gui.play_flipbook(self.vh.current_block_icon,self:get_voxel_image(voxel))
+	WORLD.game.state.building_blocks.voxel = voxel
+end
+
+function Script:get_voxel_image(voxel)
+	if(voxel) == 0 then return "white" end
+	local def = DEFS.VOXELS.VOXELS[voxel]
+	if(def)then
+		return def.img
+	end
+	 return "block_unknown"
+end
+
+function Script:update(dt)
+	if (self.show_menu) then POINTER.unlock_cursor() end
+end
+
+function Script:on_input(action_id, action)
+	if ((action_id == COMMON.HASHES.INPUT.B or action_id == COMMON.HASHES.INPUT.ESCAPE) and action.pressed) then
+		if(self.show_menu or action_id == COMMON.HASHES.INPUT.B)then
+			self:set_menu_visible(not self.show_menu)
+		end
+	end
+	if(action.pressed and action_id == COMMON.HASHES.INPUT.TOUCH)then
+		for _,view in ipairs(self.views.cells)do
+			if(gui.is_enabled(view.root,true) and gui.pick_node(view.root,action.x,action.y))then
+				self:set_current_voxel(view.voxel)
+			end
+		end
+	end
+
+end
+
+function Script:on_resize()
+
+end
+
+COMMON.N28S.register_scripts({ Script() })

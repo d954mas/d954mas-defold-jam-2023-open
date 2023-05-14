@@ -1,0 +1,113 @@
+local COMMON = require "libs.common"
+
+local SM = require "libs.sm.scene_manager"
+local DEBUG_INFO = require "debug.debug_info"
+local SCENE_LOADER = require "libs.sm.scene_loader"
+local POINTER_LOCK = require "libs.pointer_lock"
+local BUFFER = require "libs_project.buffer"
+
+local WORLD = require "world.world"
+
+local TAG = "INIT_CONTROLLER"
+local IS_DEV = COMMON.CONSTANTS.VERSION_IS_DEV
+
+local Features = require "libs.features"
+
+local SCENES = {
+	require "scenes.game.game_scene",
+}
+
+---@class ScriptMain
+local Script = COMMON.new_n28s()
+
+function Script:scenes_register()
+	local sm = SM()
+
+	sm.SCENES = {
+		GAME = "GameScene",
+	}
+
+	sm.MODALS = {
+
+	}
+
+	local reg_scenes = {}
+	for i, v in ipairs(SCENES) do reg_scenes[i] = v() end --create instances
+	sm:register(reg_scenes)
+	WORLD.sm = sm
+end
+
+function Script:init_random()
+	math.randomseed(os.time())
+	math.random()
+	math.random()
+	math.random()
+	math.random()
+end
+
+function Script:show_start_scene()
+	WORLD.sm:show(WORLD.sm.SCENES.GAME)
+
+end
+
+function Script:init()
+	self.url = msg.url()
+	COMMON.FEATURES = Features()
+	if (COMMON.CONSTANTS.VERSION_IS_RELEASE) then
+		COMMON.FEATURES:prod_config()
+	else
+		COMMON.FEATURES:debug_config()
+	end
+	COMMON.FEATURES:load()
+
+	COMMON.CONTEXT:register(COMMON.CONTEXT.NAMES.MAIN, self)
+
+	self:scenes_register()
+	self:init_random()
+	BUFFER.init()
+	POINTER_LOCK.init()
+
+	COMMON.i("init time:" .. socket.gettime() - COMMON.GLOBAL.time_init_start)
+
+	--fixed set group gain
+	timer.delay(0, false, function()
+		WORLD.sounds:on_storage_changed()
+	end)
+
+	if (jstodef) then
+		jstodef.add_listener(function(_, message_id, message)
+			COMMON.EVENT_BUS:event(COMMON.EVENTS.JSTODEF, { message_id = message_id, message = message })
+		end)
+	end
+
+	WORLD.sdk:init(function()
+		self:show_start_scene()
+	end)
+	COMMON.INPUT.acquire(self.url)
+end
+
+function Script:update(dt)
+	--init input always on top
+	COMMON.INPUT.acquire(self.url)
+	POINTER_LOCK.update()
+	if IS_DEV then DEBUG_INFO.update(dt) end
+	WORLD:update(dt)
+end
+
+function Script:final()
+	COMMON.INPUT.clear()
+	COMMON.CONTEXT:unregister(COMMON.CONTEXT.NAMES.MAIN)
+end
+
+function Script:on_input(action_id, action)
+	COMMON.INPUT.handle_pressed_keys(action_id, action)
+	if (COMMON.INPUT.IGNORE) then return true end
+end
+
+function Script:on_message(message_id, message, sender)
+	if (message_id == COMMON.HASHES.MSG.LOADING.PROXY_LOADED) then
+		SCENE_LOADER.load_done(sender)
+	end
+end
+
+COMMON.N28S.register(Script())

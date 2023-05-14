@@ -1,0 +1,32 @@
+local COMMON = require "libs.common"
+local WORLD = require "world.world"
+local DEBUG_INFO = require "debug.debug_info"
+
+local Script = COMMON.new_n28s()
+
+function Script:init()
+	gui.set_render_order(COMMON.CONSTANTS.GUI_ORDER.DEBUG)
+	self.vh = {
+		root = gui.get_node("root"),
+		lbl_entities = gui.get_node("lbl_entities"),
+		lbl_chunks = gui.get_node("lbl_chunks"),
+		lbl_buffer = gui.get_node("lbl_buffer"),
+		lbl_chunks_render = gui.get_node("lbl_chunks_render"),
+		lbl_render_vertices = gui.get_node("lbl_render_vertices"),
+	}
+	self.enabled = WORLD.storage.debug:draw_debug_info_is()
+	gui.set_enabled(self.vh.root, self.enabled)
+end
+
+function Script:update(dt)
+	if (self.enabled ~= WORLD.storage.debug:draw_debug_info_is()) then
+		self.enabled = WORLD.storage.debug:draw_debug_info_is()
+		gui.set_enabled(self.vh.root, self.enabled)
+	end
+	if(self.enabled)then
+		gui.set_text(self.vh.lbl_entities, DEBUG_INFO.game_entities)
+	end
+
+end
+
+COMMON.N28S.register(Script())

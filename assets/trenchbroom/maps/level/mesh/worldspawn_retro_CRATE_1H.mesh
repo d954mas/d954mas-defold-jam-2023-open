@@ -1,0 +1,7 @@
+material: "/illumination/materials/model.material"
+vertices: "/assets/trenchbroom/maps/level/buffer/worldspawn_retro_CRATE_1H.buffer"
+textures: "/assets/trenchbroom/textures/retro/CRATE_1H.png"
+textures: "/illumination/textures/data.png"
+primitive_type: PRIMITIVE_TRIANGLES
+position_stream: "position"
+normal_stream: "normal"

@@ -1,0 +1,87 @@
+@BaseClass = id [
+	id(string) : "The unique gameobject identifier. If it's empty the common identifier with '_n' will be used." : "<unique identifier>"
+]
+
+@BaseClass = components [
+	#component_id(string): "Path to the component file" : "/path_to/component.file"
+	#component_id.property(string): "Overrided value of the go.property" : "<overrided value>"
+]
+
+@BaseClass = material [
+	material(string) : "Path to the material that will be set in mesh components." : "/builtins/materials/model.material"
+	textureN(string) : "Path pattern to the textureN source where N is 1-7" : "/path_pattern_to/textureN.png"
+]
+
+@BaseClass = physics_contact [
+	physics_friction(float) : "Friction" : "0.1"
+	physics_restitution(float) : "Restitution" : "0.5"
+]
+
+@BaseClass = physics_filters [
+	physics_group(string) : "Collision group that will be set in collision objects." : "default"
+	physics_mask(string) : "Collision mask that will be set in collision objects." : "default"
+]
+
+@BaseClass base(physics_contact, physics_filters) = physics [
+]
+
+@SolidClass base(physics, material) = worldspawn [
+	textel_size(float) : "How much Trenchbroom grid units are equal to 1 unit in Defold." : "1"
+]
+
+@SolidClass base(id, components, material, physics) = static [
+]
+
+@SolidClass base(id, components, physics_filters) = trigger [
+]
+
+@SolidClass base(id, components, material, physics_filters) = kinematic [
+]
+
+@SolidClass base(id, components, material, physics) = dynamic [
+	physics_mass(float) : "Mass" : "1.0"
+	physics_linear_damping(float) : "Linear damping" : "0.0"
+	physics_angular_damping(float) : "Angular damping" : "0.0"
+	physics_flags(flags) = [
+		1: "Locked rotation" : 0
+		2: "Bullet" : 0
+	]
+]
+
+@PointClass base(id, components) size(-4 -4 -4, 4 4 4) color(127 127 255) = go [
+	go(string): "Your gameobject file path. Any #component_id will be ignored after that." : "/path_to/gameobject.go"
+]
+
+@PointClass size(-4 -4 -4, 4 4 4) color(127 255 255) = illumination [
+	go(string): "Illumination game object" : "/illumination/illumination.go"
+	rotation(string): "Sunlight direction" : "-45 -45 0"
+	#illumination.ambient_color(color): "Ambient color" : "1.0 1.0 1.0"
+	#illumination.ambient_level(float): "Ambient level" : "0.2"
+	#illumination.sunlight_color(color): "Sunlight color" : "1.0 1.0 1.0"
+	#illumination.sunlight_brightness(float): "Sunlight brightness" : "1.0"
+	#illumination.sunlight_specular(float): "Sunlight specular component" : "0.5"
+	#illumination.fog(string): "Is fog enabled" : "true"
+	#illumination.fog_is_radial(string): "Is fog radial" : "true"
+	#illumination.fog_distance_min(float): "Minimal distance of fog gradient" : "20"
+	#illumination.fog_distance_max(float): "Maximal distance of fog gradient" : "30"
+	#illumination.fog_color(color): "Fog color" : "0.53 0.80 0.92"
+	#illumination.fog_level(float): "Fog level" : "1.0"
+]
+
+@BaseClass base(id) = light [
+	#light.color(color): "Light color" : "1.0 1.0 1.0"
+	#light.brightness(float): "Light brightness" : "0.7"
+	#light.radius(float): "Radius of lighting" : "5.0"
+	#light.specular(float): "Specular component" : "0.5"
+	#light.smoothness(float): "Smoothness of attenuation" : "1.0"
+]
+
+@PointClass base(light) size(-4 -4 -4, 4 4 4) color(255 255 0) = light_point [
+	go(string): "Light point game object" : "/illumination/light_point.go"
+]
+
+@PointClass base(light) size(-4 -4 -4, 4 4 4) color(255 255 0) = light_spot [
+	go(string): "Light spot game object" : "/illumination/light_spot.go"
+	rotation(string): "Euler of the spot direction" : "0 0 0"
+	#light.cutoff(float): "Cutoff part" : "0.3"
+]

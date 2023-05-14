@@ -1,0 +1,9 @@
+[project]
+title = DefoldJam2023 Dev
+
+[android]
+package = com.d954mas.game.defoldjam2023.dev
+
+
+[game]
+version = dev

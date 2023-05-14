@@ -1,0 +1,9 @@
+newmtl flags/clip
+map_Kd textures\flags\clip.png
+
+newmtl retro/FLOOR_1A
+map_Kd textures\retro\FLOOR_1A.png
+
+newmtl retro/RIVET_2B
+map_Kd textures\retro\RIVET_2B.png
+

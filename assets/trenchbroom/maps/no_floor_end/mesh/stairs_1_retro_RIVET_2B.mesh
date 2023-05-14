@@ -1,0 +1,7 @@
+material: "/illumination/materials/model.material"
+vertices: "/assets/trenchbroom/maps/no_floor_end/buffer/stairs_1_retro_RIVET_2B.buffer"
+textures: "/assets/trenchbroom/textures/retro/RIVET_2B.png"
+textures: "/illumination/textures/data.png"
+primitive_type: PRIMITIVE_TRIANGLES
+position_stream: "position"
+normal_stream: "normal"

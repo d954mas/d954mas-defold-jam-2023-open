@@ -1,0 +1,130 @@
+path_settings {
+  path: "/assets/images/debug/**/*.atlas"
+  profile: "RGBA16 UASTC"
+}
+path_settings {
+  path: "/assets/images/game/blocks.atlas"
+  profile: "RGB TEXTURE"
+}
+path_settings {
+  path: "/assets/textures/rgb/mip/*"
+  profile: "RGB TEXTURE MIP"
+}
+path_settings {
+  path: "/assets/textures/rgb/*"
+  profile: "RGB TEXTURE"
+}
+path_settings {
+  path: "/assets/textures/rgba/mip/*"
+  profile: "RGBA TEXTURE MIP"
+}
+path_settings {
+  path: "/assets/textures/rgba/*"
+  profile: "RGBA TEXTURE"
+}
+path_settings {
+  path: "/assets/images/gui/**/*.atlas"
+  profile: "Default No MipMaps"
+}
+path_settings {
+  path: "**"
+  profile: "Default No MipMaps"
+}
+profiles {
+  name: "Default"
+  platforms {
+    os: OS_ID_GENERIC
+    formats {
+      format: TEXTURE_FORMAT_RGBA
+      compression_level: HIGH
+      compression_type: COMPRESSION_TYPE_DEFAULT
+    }
+    mipmaps: true
+    max_texture_size: 0
+    premultiply_alpha: true
+  }
+}
+profiles {
+  name: "RGB TEXTURE"
+  platforms {
+    os: OS_ID_GENERIC
+    formats {
+      format: TEXTURE_FORMAT_RGB
+      compression_level: HIGH
+      compression_type: COMPRESSION_TYPE_BASIS_UASTC
+    }
+    mipmaps: false
+    max_texture_size: 2048
+    premultiply_alpha: true
+  }
+}
+profiles {
+  name: "Default No MipMaps"
+  platforms {
+    os: OS_ID_GENERIC
+    formats {
+      format: TEXTURE_FORMAT_RGBA
+      compression_level: NORMAL
+      compression_type: COMPRESSION_TYPE_BASIS_UASTC
+    }
+    mipmaps: true
+    max_texture_size: 2048
+    premultiply_alpha: true
+  }
+}
+profiles {
+  name: "RGBA16 UASTC"
+  platforms {
+    os: OS_ID_GENERIC
+    formats {
+      format: TEXTURE_FORMAT_RGBA_16BPP
+      compression_level: BEST
+      compression_type: COMPRESSION_TYPE_BASIS_UASTC
+    }
+    mipmaps: false
+    max_texture_size: 256
+    premultiply_alpha: true
+  }
+}
+profiles {
+  name: "RGB TEXTURE MIP"
+  platforms {
+    os: OS_ID_GENERIC
+    formats {
+      format: TEXTURE_FORMAT_RGB
+      compression_level: HIGH
+      compression_type: COMPRESSION_TYPE_BASIS_UASTC
+    }
+    mipmaps: true
+    max_texture_size: 2048
+    premultiply_alpha: false
+  }
+}
+profiles {
+  name: "RGBA TEXTURE"
+  platforms {
+    os: OS_ID_GENERIC
+    formats {
+      format: TEXTURE_FORMAT_RGBA
+      compression_level: HIGH
+      compression_type: COMPRESSION_TYPE_BASIS_UASTC
+    }
+    mipmaps: false
+    max_texture_size: 0
+    premultiply_alpha: true
+  }
+}
+profiles {
+  name: "RGBA TEXTURE MIP"
+  platforms {
+    os: OS_ID_GENERIC
+    formats {
+      format: TEXTURE_FORMAT_RGBA
+      compression_level: HIGH
+      compression_type: COMPRESSION_TYPE_BASIS_UASTC
+    }
+    mipmaps: true
+    max_texture_size: 0
+    premultiply_alpha: true
+  }
+}

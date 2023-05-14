@@ -1,0 +1,12 @@
+collision_shape: "/assets/trenchbroom/maps/level/convexshape/dynamic_1_b1_dynamic.convexshape"
+type: COLLISION_OBJECT_TYPE_DYNAMIC
+mass: 1.0
+friction: 0.05
+restitution: 0.0
+group: "obstacle"
+mask: "walker"
+mask: "default"
+linear_damping: 0.9
+angular_damping: 0.0
+locked_rotation: true
+bullet: false

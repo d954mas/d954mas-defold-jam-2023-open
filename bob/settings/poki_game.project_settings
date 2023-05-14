@@ -1,0 +1,6 @@
+[project]
+dependencies#0 = https://github.com/AGulev/defold-poki-sdk/archive/refs/tags/1.3.0.zip
+
+[game]
+target = poki
+

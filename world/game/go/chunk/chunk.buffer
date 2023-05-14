@@ -1,0 +1,52 @@
+[
+  {
+    "name": "position",
+    "type": "float32",
+    "count": 3,
+    "data": [
+      -1,-1,0,1,-1,0,1,1,0,-1,-1,0,1,1,0,-1,1,0
+    ]
+  },
+  {
+    "name": "normal",
+    "type": "float32",
+    "count": 3,
+    "data": [
+      0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1
+    ]
+  },
+  {
+    "name": "texcoord0",
+    "type": "float32",
+    "count": 2,
+    "data": [
+      0,0,1,0,1,1,0,0,1,1,0,1
+    ]
+  }
+  ,{
+    "name": "cd_pos_x",
+    "type": "uint8",
+    "count": 1,
+    "data": [
+      0,0,0,0,0,0
+    ]
+  },
+{
+   "name": "cd_pos_y",
+   "type": "uint8",
+   "count": 1,
+   "data": [
+     0,0,0,0,0,0
+   ]
+ }
+
+ ,{
+     "name": "cd_pos_z",
+     "type": "uint8",
+     "count": 1,
+     "data": [
+       0,0,0,0,0,0
+     ]
+   }
+
+]
